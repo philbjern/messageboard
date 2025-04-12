@@ -10,12 +10,27 @@ const runner            = require('./test-runner');
 
 const app = express();
 
+const helmet = require('helmet');
+
 app.use('/public', express.static(process.cwd() + '/public'));
 
 app.use(cors({origin: '*'})); //For FCC testing purposes only
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      'default-src': ["'self'"],
+      'script-src': ["'self'"],
+      'style-src': ["'self'"],
+    },
+  },
+  xDnsPrefetchControl: { allow: false },
+  xFrameOptions: { action: 'sameorign' },
+  referrerPolicy: { policy: 'same-origin' },
+}));
 
 //Sample front-end
 app.route('/b/:board/')
