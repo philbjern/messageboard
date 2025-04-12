@@ -1,6 +1,8 @@
+const { Board } = require("../model");
+
 const threads = [
   {
-    _id: 'thread_id_1',
+    board: 'test_board',
     text: 'First thread',
     created_on: new Date(),
     bumped_on: new Date(),
@@ -9,7 +11,7 @@ const threads = [
     replies: []
   },
   {
-    _id: 'thread_id_2',
+    board: 'test_board',
     text: 'Second thread',
     created_on: new Date(),
     bumped_on: new Date(),
