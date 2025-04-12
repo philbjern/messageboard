@@ -3,6 +3,7 @@ const chai = require('chai');
 const assert = chai.assert;
 const server = require('../server');
 const { Board, Thread, Reply } = require('../model');
+const { threads } = require('../mock/threads');
 
 const crypto = require('crypto');
 const mongoose = require('mongoose');
