@@ -5,6 +5,15 @@ const server = require('../server');
 
 chai.use(chaiHttp);
 
-suite('Functional Tests', function() {
+describe('Functional Tests', function() {
+
+  it('should run test', function (done) {
+    chai.request(server)
+      .get('/')
+      .end(function(err, res) {
+        assert.equal(res.status, 200);
+        done();
+      });
+  })
 
 });
