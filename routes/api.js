@@ -62,8 +62,8 @@ module.exports = function (app) {
         return res.status(404).json({ error: 'Board not found after update (this should ideally not happen with upsert)' });
       }
 
-      // res.redirect(`/b/${boardId}`);
-      res.json(savedThread);
+      res.redirect(`/b/${boardId}`);
+      // res.json(savedThread);
 
     } catch (err) {
       console.error(err);
