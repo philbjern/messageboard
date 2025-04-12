@@ -1,5 +1,3 @@
-const { Board } = require("../model");
-
 const threads = [
   {
     board: 'test_board',
@@ -8,7 +6,6 @@ const threads = [
     bumped_on: new Date(),
     reported: false,
     delete_password: 'password',
-    replies: []
   },
   {
     board: 'test_board',
@@ -17,7 +14,6 @@ const threads = [
     bumped_on: new Date(),
     reported: false,
     delete_password: 'password',
-    replies: []
   }
 ];
 
