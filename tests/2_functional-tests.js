@@ -3,7 +3,7 @@ const chai = require('chai');
 const assert = chai.assert;
 const server = require('../server');
 const { Board, Thread, Reply } = require('../model');
-const { threads } = require('../mock/threads');
+const { threads, replies } = require('../mock/threads');
 
 const crypto = require('crypto');
 const mongoose = require('mongoose');
@@ -40,8 +40,29 @@ describe('Functional Tests', function() {
     try {
       await Thread.deleteMany({});
       console.log("All threads deleted");
-      await Thread.insertMany(threads);
+      const insertedThreads = await Thread.insertMany(threads);
       console.log("Initial threads inserted");
+
+      const createAndAssociateReplies = async () => {
+        for (const threadDoc of insertedThreads) {
+          const newReplies = [
+            { thread: threadDoc._id, text: 'First reply', delete_password: 'replypass1' },
+            { thread: threadDoc._id, text: 'Second reply', delete_password: 'replypass2' },
+            { thread: threadDoc._id, text: 'Third reply', delete_password: 'replypass3' },
+          ];
+  
+          const savedReplies = await Reply.insertMany(newReplies);
+          const replyIds = savedReplies.map(reply => reply._id);
+  
+          threadDoc.replies.push(...replyIds);
+          threadDoc.replycount = threadDoc.replies.length;
+          threadDoc.bumped_on = new Date();
+          await threadDoc.save();
+        }
+      };
+
+      await createAndAssociateReplies();
+      console.log("Replies created and associated with threads");
     } catch (err) {
       console.error("Error in before hook:", err);
       throw err; // Ensure that errors are propagated
@@ -59,7 +80,7 @@ describe('Functional Tests', function() {
 
   it('should create a new thread POST to /api/threads/:board', function(done) {
     chai.request(server)
-      .post('/api/threads/testboard')
+      .post('/api/threads/testboard123')
       .send({
         text: 'Test thread',
         delete_password: 'password123'
@@ -73,5 +94,63 @@ describe('Functional Tests', function() {
         });
       });
   })
+
+  it('should show 10 most recent threads with 3 replies each GET to /api/threads/:board', function(done) {
+    chai.request(server)
+      .get('/api/threads/testboard')
+      .end(function(err, res) {
+        assert.equal(res.status, 200);
+        assert.isArray(res.body);
+        assert.isAtMost(res.body.length, 10);
+        res.body.forEach(thread => {
+          assert.isArray(thread.replies);
+          assert.isAtMost(thread.replies.length, 3);
+        });
+        done();
+      });
+  });
+
+  it("should respond to delete request invalid password with 403", function(done) {
+    Thread.findOne({ text: 'First thread' }, function(err, thread) {
+      if (err) {
+        console.error("Error finding thread:", err);
+        return done(err);
+      }
+      chai.request(server)
+      .delete('/api/threads/testboard')
+      .send({
+        thread_id: thread._id,
+        delete_password: 'wrongpassword'
+      })
+      .end(function(err, res) {
+        assert.equal(res.status, 403);
+        assert.equal(res.body.error, 'Incorrect password');
+        done();
+      });
+    });
+  })
+
+  it('should delete a thread with correct password', function(done) {
+    Thread.findOne({ text: 'First thread' }, function(err, thread) {
+      if (err) {
+        console.error("Error finding thread:", err);
+        return done(err);
+      }
+
+      const validPassword = crypto.createHash('sha256').update('password').digest('hex');
+
+      chai.request(server)
+        .delete('/api/threads/testboard')
+        .send({
+          thread_id: thread._id,
+          delete_password: 'password'
+        })
+        .end(function(err, res) {
+          assert.equal(res.status, 200);
+          assert.equal(res.body.message, 'Thread deleted successfully');
+          done();
+        });
+    });
+  });
 
 });
