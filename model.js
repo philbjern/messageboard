@@ -21,6 +21,7 @@ const Thread = mongoose.model('Thread', threadSchema);
 
 
 const replySchema = new mongoose.Schema({
+  thread: { type: mongoose.Schema.Types.ObjectId, ref: 'Thread' },
   text: { type: String, required: true },
   delete_password: { type: String, required: true },
   created_on: { type: Date, default: Date.now },
