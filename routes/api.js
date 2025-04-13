@@ -63,8 +63,6 @@ module.exports = function (app) {
       }
 
       res.redirect(`/b/${boardId}`);
-      // res.json(savedThread);
-
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: 'Failed to save thread and update board' });
@@ -91,12 +89,10 @@ module.exports = function (app) {
           created_on: thread.created_on,
           bumped_on: thread.bumped_on,
           replycount: thread.replycount,
-          reported: thread.reported
         }));
         
         res.json(threads);
       });
-
 
   }).put((req, res) => { 
     // Reporting a thread
