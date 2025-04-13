@@ -90,6 +90,8 @@ describe('Functional Tests', function () {
         Thread.findOne({ text: 'Test thread' }, function (err, thread) {
           assert.equal(thread.text, 'Test thread');
           assert.equal(thread.delete_password, hashedPassword);
+          assert.isNotNull(thread.replies);
+          assert.isArray(thread.replies);
           done();
         });
       });
@@ -147,7 +149,7 @@ describe('Functional Tests', function () {
         })
         .end(function (err, res) {
           assert.equal(res.status, 200);
-          assert.equal(res.body.message, 'Thread deleted successfully');
+          assert.equal(res.body, 'success');
           done();
         });
     });
@@ -167,7 +169,7 @@ describe('Functional Tests', function () {
         })
         .end(function (err, res) {
           assert.equal(res.status, 200);
-          assert.equal(res.body.message, 'Thread reported successfully');
+          assert.equal(res.body, 'reported');
           done();
         });
     });
