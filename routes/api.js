@@ -14,7 +14,7 @@ module.exports = function (app) {
     useUnifiedTopology: true,
   });
 
-  
+
   // Middleware to check if the board exists
   const checkThreadExists = (req, res, next) => {
     const boardId = req.params.board;
@@ -33,7 +33,7 @@ module.exports = function (app) {
   app.route('/api/threads/:board').post(async (req, res) => {
     const boardId = req.params.board;
     const { text, delete_password } = req.body;
-    
+
     if (!text || !delete_password) {
       return res.status(400).json({ error: 'Text and delete password are required' });
     }
@@ -67,33 +67,44 @@ module.exports = function (app) {
       return res.status(500).json({ error: 'Failed to save thread and update board' });
     }
 
-    
-  }).get((req, res) => {
+
+  }).get(async (req, res) => {
     const boardId = req.params.board;
+    const threadId = req.query.thread_id;
 
     if (!boardId) {
       return res.status(400).json({ error: 'Board ID is required' });
     }
-    
-    Board.findOne({ name: boardId })
-      .populate({ path: 'threads', options: { limit: 10, sort: { created_on: -1 } } })
-      .exec((err, board) => {
-        if (err || !board) {
-          return res.status(404).json({ error: 'Board not found' });
-        }
-        
-        const threads = board.threads.map(thread => ({
-          _id: thread._id,
-          text: thread.text,
-          created_on: thread.created_on,
-          bumped_on: thread.bumped_on,
-          replycount: thread.replycount,
-        }));
-        
-        res.json(threads);
-      });
 
-  }).put((req, res) => { 
+    if (threadId) {
+      // Fetching a specific thread
+      const thread = await Thread.findById(threadId).populate('replies').exec();
+
+      if (thread) {
+        return res.json({ thread })
+      }
+      return res.status(404).json({ error: 'Thread not found' });
+    }
+
+    const board = await Board.findOne({ name: boardId })
+      .populate({ path: 'threads', populate: { path: 'replies' }, options: { limit: 10, sort: { created_on: -1 } } })
+      .exec();
+
+    if (!board) {
+      return res.status(404).json({ error: 'Board not found' });
+    }
+
+    const threads = board.threads.map(thread => ({
+      _id: thread._id,
+      text: thread.text,
+      created_on: thread.created_on,
+      bumped_on: thread.bumped_on,
+      replycount: thread.replycount,
+      replies: thread.replies,
+    }));
+
+    return res.json(board);
+  }).put((req, res) => {
     // Reporting a thread
     const threadId = req.body.thread_id;
 
@@ -106,7 +117,7 @@ module.exports = function (app) {
         return res.status(500).json({ error: 'Failed to report thread' });
       }
       res.json('reported');
-  });
+    });
   }).delete((req, res) => {
     // Deleting a thread with password
     const threadId = req.body.thread_id;
@@ -135,12 +146,12 @@ module.exports = function (app) {
       });
     });
   });
-    
+
   app.route('/api/replies/:board').get((req, res) => {
     const boardId = req.params.board;
     if (!boardId) {
       return res.status(400).json({ error: 'Board ID is required' });
-    } 
+    }
     res.json({ message: 'Replies API' });
   }).post((req, res) => {
     const boardId = req.params.board;
