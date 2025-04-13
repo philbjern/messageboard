@@ -12,9 +12,9 @@ dotenv.config();
 
 chai.use(chaiHttp);
 
-describe('Functional Tests', function() {
+describe('Functional Tests', function () {
 
-  before(function(done) {
+  before(function (done) {
     this.timeout(5000); // Increase timeout to 5000ms
     mongoose.connect(process.env.DB, { useNewUrlParser: true, useUnifiedTopology: true })
       .then(() => {
@@ -27,7 +27,7 @@ describe('Functional Tests', function() {
       });
   })
 
-  before(async function() {
+  before(async function () {
     this.timeout(10000); // Increase timeout for this hook to 10 seconds
     console.log("Seeding initial data");
 
@@ -50,10 +50,10 @@ describe('Functional Tests', function() {
             { thread: threadDoc._id, text: 'Second reply', delete_password: 'replypass2' },
             { thread: threadDoc._id, text: 'Third reply', delete_password: 'replypass3' },
           ];
-  
+
           const savedReplies = await Reply.insertMany(newReplies);
           const replyIds = savedReplies.map(reply => reply._id);
-  
+
           threadDoc.replies.push(...replyIds);
           threadDoc.replycount = threadDoc.replies.length;
           threadDoc.bumped_on = new Date();
@@ -72,22 +72,22 @@ describe('Functional Tests', function() {
   it('should run test', function (done) {
     chai.request(server)
       .get('/')
-      .end(function(err, res) {
+      .end(function (err, res) {
         assert.equal(res.status, 200);
         done();
       });
   })
 
-  it('should create a new thread POST to /api/threads/:board', function(done) {
+  it('should create a new thread POST to /api/threads/:board', function (done) {
     chai.request(server)
       .post('/api/threads/testboard123')
       .send({
         text: 'Test thread',
         delete_password: 'password123'
       })
-      .end(function(err, res) {
+      .end(function (err, res) {
         const hashedPassword = crypto.createHash('sha256').update('password123').digest('hex');
-        Thread.findOne({ text: 'Test thread' }, function(err, thread) {
+        Thread.findOne({ text: 'Test thread' }, function (err, thread) {
           assert.equal(thread.text, 'Test thread');
           assert.equal(thread.delete_password, hashedPassword);
           done();
@@ -95,10 +95,10 @@ describe('Functional Tests', function() {
       });
   })
 
-  it('should show 10 most recent threads with 3 replies each GET to /api/threads/:board', function(done) {
+  it('should show 10 most recent threads with 3 replies each GET to /api/threads/:board', function (done) {
     chai.request(server)
       .get('/api/threads/testboard')
-      .end(function(err, res) {
+      .end(function (err, res) {
         assert.equal(res.status, 200);
         assert.isArray(res.body);
         assert.isAtMost(res.body.length, 10);
@@ -110,28 +110,28 @@ describe('Functional Tests', function() {
       });
   });
 
-  it("should respond to delete request invalid password with 403", function(done) {
-    Thread.findOne({ text: 'First thread' }, function(err, thread) {
+  it("should respond to delete request invalid password with 403", function (done) {
+    Thread.findOne({ text: 'First thread' }, function (err, thread) {
       if (err) {
         console.error("Error finding thread:", err);
         return done(err);
       }
       chai.request(server)
-      .delete('/api/threads/testboard')
-      .send({
-        thread_id: thread._id,
-        delete_password: 'wrongpassword'
-      })
-      .end(function(err, res) {
-        assert.equal(res.status, 403);
-        assert.equal(res.body.error, 'Incorrect password');
-        done();
-      });
+        .delete('/api/threads/testboard')
+        .send({
+          thread_id: thread._id,
+          delete_password: 'wrongpassword'
+        })
+        .end(function (err, res) {
+          assert.equal(res.status, 403);
+          assert.equal(res.body.error, 'Incorrect password');
+          done();
+        });
     });
   })
 
-  it('should delete a thread with correct password', function(done) {
-    Thread.findOne({ text: 'First thread' }, function(err, thread) {
+  it('should delete a thread with correct password', function (done) {
+    Thread.findOne({ text: 'First thread' }, function (err, thread) {
       if (err) {
         console.error("Error finding thread:", err);
         return done(err);
@@ -145,12 +145,60 @@ describe('Functional Tests', function() {
           thread_id: thread._id,
           delete_password: 'password'
         })
-        .end(function(err, res) {
+        .end(function (err, res) {
           assert.equal(res.status, 200);
           assert.equal(res.body.message, 'Thread deleted successfully');
           done();
         });
     });
   });
+
+  it('should report a thread', function (done) {
+    Thread.findOne({ text: 'Second thread' }, function (err, thread) {
+      if (err) {
+        console.error("Error finding thread:", err);
+        return done(err);
+      }
+
+      chai.request(server)
+        .put('/api/threads/testboard')
+        .send({
+          thread_id: thread._id
+        })
+        .end(function (err, res) {
+          assert.equal(res.status, 200);
+          assert.equal(res.body.message, 'Thread reported successfully');
+          done();
+        });
+    });
+  });
+
+  it('should create a new reply POST to /api/replies/:board', function (done) {
+    Thread.findOne({ text: 'Second thread' }, function (err, thread) {
+      if (err) {
+        console.error("Error finding thread:", err);
+        return done(err);
+      }
+      chai.request(server)
+        .post('/api/replies/testboard')
+        .send({
+          thread_id: thread._id,
+          text: 'Test reply',
+          delete_password: 'replypassword'
+        })
+        .end(function (err, res) {
+          Reply.findOne({ text: 'Test reply' }, function (err, reply) {
+            if (err) {
+              console.error("Error finding reply:", err);
+              return done(err);
+            }
+            assert.equal(reply.text, 'Test reply');
+            const hashedPassword = crypto.createHash('sha256').update('replypassword').digest('hex');
+            assert.equal(reply.delete_password, hashedPassword);
+            done();
+          })
+        })
+    })
+  })
 
 });
