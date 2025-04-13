@@ -46,7 +46,6 @@ module.exports = function (app) {
       delete_password: hashedPassword,
       created_on: new Date(),
       bumped_on: new Date(),
-      replies: []
     });
 
     try {
@@ -106,8 +105,8 @@ module.exports = function (app) {
       if (err) {
         return res.status(500).json({ error: 'Failed to report thread' });
       }
-      res.json({ message: 'Thread reported successfully' });
-    });
+      res.json('reported');
+  });
   }).delete((req, res) => {
     // Deleting a thread with password
     const threadId = req.body.thread_id;
@@ -132,7 +131,7 @@ module.exports = function (app) {
         if (err) {
           return res.status(500).json({ error: 'Failed to delete thread' });
         }
-        res.json({ message: 'Thread deleted successfully' });
+        res.json('success');
       });
     });
   });
