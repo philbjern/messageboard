@@ -1,3 +1,4 @@
+const { type } = require('mocha/lib/utils');
 const mongoose = require('mongoose');
 
 const boardSchema = mongoose.Schema({
@@ -8,7 +9,7 @@ const Board = mongoose.model('Board', boardSchema);
 
 
 const threadSchema = new mongoose.Schema({
-  board: { type: String, required: true },
+  board: { type: mongoose.Schema.Types.ObjectId, ref: 'Board' },
   text: { type: String, required: true },
   delete_password: { type: String, required: true },
   created_on: { type: Date, default: Date.now },
