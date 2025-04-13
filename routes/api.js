@@ -55,7 +55,7 @@ module.exports = function (app) {
       const updatedBoard = await Board.findOneAndUpdate(
         { name: boardId },
         { $push: { threads: savedThread._id } },
-        { new: true, upsert: true }
+        { new: true, upsert: true, useFindAndModify: false }
       );
 
       if (!updatedBoard) {
@@ -71,7 +71,7 @@ module.exports = function (app) {
     
   }).get((req, res) => {
     const boardId = req.params.board;
-    console.log(boardId)
+
     if (!boardId) {
       return res.status(400).json({ error: 'Board ID is required' });
     }
@@ -143,6 +143,45 @@ module.exports = function (app) {
       return res.status(400).json({ error: 'Board ID is required' });
     } 
     res.json({ message: 'Replies API' });
+  }).post((req, res) => {
+    const boardId = req.params.board;
+    const { text, delete_password, thread_id } = req.body;
+
+    if (!text || !delete_password || !thread_id) {
+      return res.status(400).json({ error: 'Text, delete password, and thread ID are required' });
+    }
+
+    const hashedPassword = crypto.createHash('sha256').update(delete_password).digest('hex');
+
+    const newReply = new Reply({
+      thread: thread_id,
+      text,
+      delete_password: hashedPassword,
+      created_on: new Date(),
+      bumped_on: new Date(),
+    });
+
+    newReply.save((err, savedReply) => {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to save reply' });
+      }
+
+      Thread.findByIdAndUpdate(
+        thread_id,
+        { $push: { replies: savedReply._id }, $inc: { replycount: 1 }, bumped_on: new Date() },
+        { new: true },
+        (err, updatedThread) => {
+          if (err || !updatedThread) {
+            return res.status(404).json({ error: 'Thread not found' });
+          }
+          res.redirect(`/b/${boardId}/${thread_id}`);
+        }
+      );
+    });
+  }).delete((req, res) => {
+    res.json({ message: 'Delete reply API' });
+  }).put((req, res) => {
+    res.json({ message: 'Report reply API' });
   });
 
 };
