@@ -194,7 +194,7 @@ describe('Functional Tests', function () {
         .post('/api/replies/testboard')
         .send({
           thread_id: thread._id,
-          text: 'Test reply',
+          text: 'Test reply from API',
           delete_password: 'replypassword'
         })
         .end(function (err, res) {
@@ -203,7 +203,7 @@ describe('Functional Tests', function () {
               console.error("Error finding reply:", err);
               return done(err);
             }
-            assert.equal(reply.text, 'Test reply');
+            assert.equal(reply.text, 'Test reply from API');
             const hashedPassword = crypto.createHash('sha256').update('replypassword').digest('hex');
             assert.equal(reply.delete_password, hashedPassword);
             done();
@@ -211,5 +211,27 @@ describe('Functional Tests', function () {
         })
     })
   })
+
+  it('should fetch a thread with all replies GET to /api/replies/:board', function (done) {
+    Thread.findOne({ text: 'Second thread' }, function (err, thread) {
+      if (err) {
+        console.error("Error finding thread:", err);
+        return done(err);
+      }
+      chai.request(server)
+        .get('/api/replies/testboard')
+        .query({ thread_id: thread.id })
+        .end(function (err, res) {
+          if (err) {
+            return done(err);
+          }
+          assert.equal(res.status, 200);
+          assert.isArray(res.body.replies);
+          assert.equal(res.body.replies.length, 4);
+          done();
+        });
+    });
+  })
+
 
 });

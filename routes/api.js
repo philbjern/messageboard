@@ -30,7 +30,8 @@ module.exports = function (app) {
     });
   };
 
-  app.route('/api/threads/:board').post(async (req, res) => {
+  app.route('/api/threads/:board')
+  .post(async (req, res) => {
     const boardName = req.params.board;
     const { text, delete_password } = req.body;
 
@@ -94,7 +95,7 @@ module.exports = function (app) {
         .exec();
 
       if (thread) {
-        return res.json({ thread })
+        return res.json(thread)
       }
       return res.status(404).json({ error: 'Thread not found' });
     }
@@ -159,14 +160,26 @@ module.exports = function (app) {
     });
   });
 
-  app.route('/api/replies/:board').get((req, res) => {
-    const boardId = req.params.board;
-    if (!boardId) {
-      return res.status(400).json({ error: 'Board ID is required' });
+  app.route('/api/replies/:board')
+  .get(async (req, res) => {
+    const boardName = req.params.board;
+    const threadId = req.query.thread_id;
+    if (!boardName || !threadId) {
+      return res.status(400).json({ error: 'Board name and thread id is required' });
     }
-    res.json({ message: 'Replies API' });
+
+    // Fetching a specific thread with replies
+    const thread = await Thread.findById(threadId)
+      .select("-__v -delete_password -reported")
+      .populate({ path: 'replies', select: "-__v -delete_password -reported" })
+      .exec();
+      
+    if (!thread) {
+      return res.status(404).json({ error: 'Thread not found' });
+    }
+    res.json(thread);
   }).post((req, res) => {
-    const boardId = req.params.board;
+    const boardName = req.params.board;
     const { text, delete_password, thread_id } = req.body;
 
     if (!text || !delete_password || !thread_id) {
@@ -196,12 +209,36 @@ module.exports = function (app) {
           if (err || !updatedThread) {
             return res.status(404).json({ error: 'Thread not found' });
           }
-          res.redirect(`/b/${boardId}/${thread_id}`);
+          // res.redirect(`/b/${boardId}/${thread_id}`);
+          res.json(updatedThread);
         }
       );
     });
-  }).delete((req, res) => {
-    res.json({ message: 'Delete reply API' });
+  }).delete(async (req, res) => {
+    const boardName = req.params.board;
+    const { thread_id, reply_id, delete_password } = req.body;
+    if (!thread_id || !reply_id || !delete_password) {
+      return res.status(400).json({ error: 'Thread ID, reply ID, and delete password are required' });
+    }
+
+    const reply =  await Reply.findById(reply_id).exec();
+    if (!reply) {
+      return res.status(404).json({ error: 'Reply not found' });
+    }
+
+    const deletePasswordHash = crypto.createHash('sha256').update(delete_password).digest('hex');
+    if (reply.delete_password !== deletePasswordHash) {
+      return res.send('incorrect password');
+    }
+
+    reply.text += ' [deleted]';
+    reply.save((err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to delete reply' });
+      }
+    })
+
+    res.send('success');
   }).put((req, res) => {
     res.json({ message: 'Report reply API' });
   });
