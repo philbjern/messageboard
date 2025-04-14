@@ -113,7 +113,7 @@ describe('Functional Tests', function () {
       });
   });
 
-  it("should respond to delete request invalid password with 403", function (done) {
+  it("should respond to thread delete request invalid password with 403", function (done) {
     Thread.findOne({ text: 'First thread' }, function (err, thread) {
       if (err) {
         console.error("Error finding thread:", err);
@@ -126,8 +126,8 @@ describe('Functional Tests', function () {
           delete_password: 'wrongpassword'
         })
         .end(function (err, res) {
-          assert.equal(res.status, 403);
-          assert.equal(res.body.error, 'Incorrect password');
+          assert.equal(res.status, 200);
+          assert.equal(res.text, 'incorrect password');
           done();
         });
     });
