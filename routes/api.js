@@ -85,7 +85,13 @@ module.exports = function (app) {
 
     if (threadId) {
       // Fetching a specific thread
-      const thread = await Thread.findById(threadId).populate('replies').exec();
+      const thread = await Thread.findById(threadId)
+        .select('-delete_password -reported')
+        .populate({ 
+          path: 'replies',
+          select: '-__v -delete_password -reported',
+        })
+        .exec();
 
       if (thread) {
         return res.json({ thread })
@@ -94,21 +100,20 @@ module.exports = function (app) {
     }
 
     const board = await Board.findOne({ name: boardId })
-      .populate({ path: 'threads', populate: { path: 'replies' }, options: { limit: 10, sort: { created_on: -1 } } })
+      .select('-delete_password -reported')
+      .populate({ 
+        path: 'threads',
+        select: '-__v -delete_password -reported',
+        populate: { 
+          path: 'replies',
+          select: '-__v -delete_password -reported',
+        }, 
+        options: { limit: 10, sort: { created_on: -1 } } })
       .exec();
 
     if (!board) {
       return res.status(404).json({ error: 'Board not found' });
     }
-
-    const threads = board.threads.map(thread => ({
-      _id: thread._id,
-      text: thread.text,
-      created_on: thread.created_on,
-      bumped_on: thread.bumped_on,
-      replycount: thread.replycount,
-      replies: thread.replies,
-    }));
 
     return res.json(board);
   }).put((req, res) => {
