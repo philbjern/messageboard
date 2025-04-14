@@ -9,7 +9,8 @@ const Board = mongoose.model('Board', boardSchema);
 
 
 const threadSchema = new mongoose.Schema({
-  board: { type: mongoose.Schema.Types.ObjectId, ref: 'Board' },
+  board_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Board' },
+  board: { type: String, required: true },
   text: { type: String, required: true },
   delete_password: { type: String, required: true },
   created_on: { type: Date, default: Date.now },

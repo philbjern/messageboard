@@ -31,16 +31,16 @@ module.exports = function (app) {
   };
 
   app.route('/api/threads/:board').post(async (req, res) => {
-    const boardId = req.params.board;
+    const boardName = req.params.board;
     const { text, delete_password } = req.body;
 
     if (!text || !delete_password) {
       return res.status(400).json({ error: 'Text and delete password are required' });
     }
 
-    let board = await Board.findOne({ name: boardId }).exec();
+    let board = await Board.findOne({ name: boardName }).exec();
     if (!board) {
-      board = new Board({ name: boardId });
+      board = new Board({ name: boardName });
       console.log('New board created:', board._id);
     }
     let newBoardId = board._id;
@@ -48,7 +48,8 @@ module.exports = function (app) {
     const hashedPassword = crypto.createHash('sha256').update(delete_password).digest('hex');
 
     const newThread = new Thread({
-      board: newBoardId,
+      board_id: newBoardId,
+      board: boardName,
       text,
       delete_password: hashedPassword,
       created_on: new Date(),

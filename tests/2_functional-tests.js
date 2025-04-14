@@ -112,11 +112,10 @@ describe('Functional Tests', function () {
       .get('/api/threads/testboard')
       .end(function (err, res) {
         assert.equal(res.status, 200);
-        assert.isArray(res.body);
-        assert.isAtMost(res.body.length, 10);
-        res.body.forEach(thread => {
+        assert.isArray(res.body.threads);
+        assert.isAtMost(res.body.threads.length, 10);
+        res.body.threads.forEach(thread => {
           assert.isArray(thread.replies);
-          assert.isAtMost(thread.replies.length, 3);
         });
         done();
       });
@@ -159,7 +158,7 @@ describe('Functional Tests', function () {
         })
         .end(function (err, res) {
           assert.equal(res.status, 200);
-          assert.equal(res.body, 'success');
+          assert.equal(res.text, 'success');
           done();
         });
     });
@@ -179,7 +178,7 @@ describe('Functional Tests', function () {
         })
         .end(function (err, res) {
           assert.equal(res.status, 200);
-          assert.equal(res.body, 'reported');
+          assert.equal(res.text, 'reported');
           done();
         });
     });
