@@ -38,6 +38,14 @@ describe('Functional Tests', function () {
     }
 
     try {
+      // clear existing boards
+      await Board.deleteMany({});
+      console.log("All boards deleted");
+      const testBoard = await Board.insertMany({ name: 'testboard' });
+      const testBoardId = testBoard[0]._id;
+      console.log("Test board created with ID:", testBoardId);
+
+
       await Thread.deleteMany({});
       console.log("All threads deleted");
       const insertedThreads = await Thread.insertMany(threads);
@@ -52,11 +60,13 @@ describe('Functional Tests', function () {
           ];
 
           const savedReplies = await Reply.insertMany(newReplies);
-          const replyIds = savedReplies.map(reply => reply._id);
 
-          threadDoc.replies.push(...replyIds);
-          threadDoc.replycount = threadDoc.replies.length;
+          threadDoc.replies.push(...savedReplies);
           threadDoc.bumped_on = new Date();
+          threadDoc.replycount = threadDoc.replies.length;
+          threadDoc.board = testBoardId;
+
+          await Board.findOneAndUpdate({ _id: testBoardId }, { $push: { threads: threadDoc._id } }, { new: true, upsert: true, useFindAndModify: false });
           await threadDoc.save();
         }
       };

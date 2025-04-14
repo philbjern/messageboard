@@ -4,9 +4,11 @@ const hashPassword = (password) => {
   return crypto.createHash('sha256').update(password).digest('hex');
 }
 
+const testBoardId =  "67fa8a49bcd152b180adbf05"
+
 const threads = [
   {
-    board: 'testboard',
+    board: testBoardId,
     text: 'First thread',
     created_on: new Date(),
     bumped_on: new Date(),
@@ -14,7 +16,7 @@ const threads = [
     delete_password: hashPassword('password'),
   },
   {
-    board: 'testboard',
+    board: testBoardId,
     text: 'Second thread',
     created_on: new Date(),
     bumped_on: new Date(),
@@ -22,7 +24,7 @@ const threads = [
     delete_password: hashPassword('password'),
   },
   {
-    board: 'testboard',
+    board: testBoardId,
     text: 'Third thread',
     created_on: new Date(),
     bumped_on: new Date(),
@@ -30,7 +32,7 @@ const threads = [
     delete_password: hashPassword('password'),
   },
   {
-    board: 'testboard',
+    board: testBoardId,
     text: 'Fourth thread',
     created_on: new Date(),
     bumped_on: new Date(),
@@ -38,7 +40,7 @@ const threads = [
     delete_password: hashPassword('password'),
   },
   {
-    board: 'testboard',
+    board: testBoardId,
     text: 'Fifth thread',
     created_on: new Date(),
     bumped_on: new Date(),
@@ -46,7 +48,7 @@ const threads = [
     delete_password: hashPassword('password'),
   },
   {
-    board: 'testboard',
+    board: testBoardId,
     text: 'Sixth thread',
     created_on: new Date(),
     bumped_on: new Date(),
@@ -54,7 +56,7 @@ const threads = [
     delete_password: hashPassword('password'),
   },
   {
-    board: 'testboard',
+    board: testBoardId,
     text: 'Seventh thread',
     created_on: new Date(),
     bumped_on: new Date(),
@@ -62,7 +64,7 @@ const threads = [
     delete_password: hashPassword('password'),
   },
   {
-    board: 'testboard',
+    board: testBoardId,
     text: 'Eight thread',
     created_on: new Date(),
     bumped_on: new Date(),
@@ -70,7 +72,7 @@ const threads = [
     delete_password: hashPassword('password'),
   },
   {
-    board: 'testboard',
+    board: testBoardId,
     text: 'Ninth thread',
     created_on: new Date(),
     bumped_on: new Date(),
@@ -78,7 +80,7 @@ const threads = [
     delete_password: hashPassword('password'),
   },
   {
-    board: 'testboard',
+    board: testBoardId,
     text: 'Tenth thread',
     created_on: new Date(),
     bumped_on: new Date(),
