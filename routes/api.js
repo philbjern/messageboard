@@ -38,30 +38,36 @@ module.exports = function (app) {
       return res.status(400).json({ error: 'Text and delete password are required' });
     }
 
+    let board = await Board.findOne({ name: boardId }).exec();
+    if (!board) {
+      board = new Board({ name: boardId });
+      console.log('New board created:', board._id);
+    }
+    let newBoardId = board._id;
+
     const hashedPassword = crypto.createHash('sha256').update(delete_password).digest('hex');
 
     const newThread = new Thread({
-      board: boardId,
+      board: newBoardId,
       text,
       delete_password: hashedPassword,
       created_on: new Date(),
       bumped_on: new Date(),
     });
 
+    board.threads.push(newThread._id);
+    board.bumped_on = new Date();
+
     try {
       const savedThread = await newThread.save();
+      const savedBoard = await board.save();
 
-      const updatedBoard = await Board.findOneAndUpdate(
-        { name: boardId },
-        { $push: { threads: savedThread._id } },
-        { new: true, upsert: true, useFindAndModify: false }
-      );
-
-      if (!updatedBoard) {
-        return res.status(404).json({ error: 'Board not found after update (this should ideally not happen with upsert)' });
+      if (!savedBoard) {
+        return res.status(404).json({ error: 'Could not save board' });
       }
 
-      res.redirect(`/b/${boardId}`);
+      // res.redirect(`/b/${boardId}`);
+      res.json(saveedThread)
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: 'Failed to save thread and update board' });
@@ -116,7 +122,7 @@ module.exports = function (app) {
       if (err) {
         return res.status(500).json({ error: 'Failed to report thread' });
       }
-      res.json('reported');
+      res.send('reported');
     });
   }).delete((req, res) => {
     // Deleting a thread with password
@@ -142,7 +148,7 @@ module.exports = function (app) {
         if (err) {
           return res.status(500).json({ error: 'Failed to delete thread' });
         }
-        res.json('success');
+        res.send('success');
       });
     });
   });
