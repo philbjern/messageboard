@@ -198,7 +198,7 @@ describe('Functional Tests', function () {
           delete_password: 'replypassword'
         })
         .end(function (err, res) {
-          Reply.findOne({ text: 'Test reply' }, function (err, reply) {
+          Reply.findOne({ text: 'Test reply from API' }, function (err, reply) {
             if (err) {
               console.error("Error finding reply:", err);
               return done(err);
