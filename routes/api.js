@@ -159,7 +159,7 @@ module.exports = function (app) {
       const hashedPassword = crypto.createHash('sha256').update(deletePassword).digest('hex');
 
       if (thread.delete_password !== hashedPassword) {
-        return res.status(403).json({ error: 'Incorrect password' });
+        return res.send('incorrect password');
       }
 
       thread.remove((err) => {
@@ -192,19 +192,20 @@ module.exports = function (app) {
   }).post((req, res) => {
     const boardName = req.params.board;
     const { text, delete_password, thread_id } = req.body;
-
+    
     if (!text || !delete_password || !thread_id) {
       return res.status(400).json({ error: 'Text, delete password, and thread ID are required' });
     }
-
+    
+    const newBumpedOn = new Date();
     const hashedPassword = crypto.createHash('sha256').update(delete_password).digest('hex');
 
     const newReply = new Reply({
       thread: thread_id,
       text,
       delete_password: hashedPassword,
-      created_on: new Date(),
-      bumped_on: new Date(),
+      created_on: newBumpedOn,
+      bumped_on: newBumpedOn,
     });
 
     newReply.save((err, savedReply) => {
@@ -214,7 +215,7 @@ module.exports = function (app) {
 
       Thread.findByIdAndUpdate(
         thread_id,
-        { $push: { replies: savedReply._id }, $inc: { replycount: 1 }, bumped_on: new Date() },
+        { $push: { replies: savedReply._id }, $inc: { replycount: 1 }, bumped_on: newBumpedOn },
         { new: true },
         (err, updatedThread) => {
           if (err || !updatedThread) {
@@ -242,7 +243,7 @@ module.exports = function (app) {
       return res.send('incorrect password');
     }
 
-    reply.text += ' [deleted]';
+    reply.text = '[deleted]';
     reply.save((err) => {
       if (err) {
         return res.status(500).json({ error: 'Failed to delete reply' });
