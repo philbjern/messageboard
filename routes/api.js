@@ -127,7 +127,7 @@ module.exports = function (app) {
       return res.status(404).json({ error: 'Board not found' });
     }
 
-    return res.json(board);
+    return res.json(board.threads);
   }).put((req, res) => {
     // Reporting a thread
     const threadId = req.body.thread_id;
