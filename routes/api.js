@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 
 const { Board, Thread, Reply } = require('../model.js');
+const { path } = require('../server.js');
 
 module.exports = function (app) {
 
@@ -29,6 +30,16 @@ module.exports = function (app) {
       next();
     });
   };
+
+  app.route('/api/threads')
+  .get(async (req, res) => {
+    // Return all threads
+    const boards = await Board.find()
+    .populate({ path: 'threads', select: '-__v -delete_password -reported', populate: { path: 'replies', select: '-__v -delete_password -reported' } })
+    .exec();
+
+    return res.json(boards);
+  })
 
   app.route('/api/threads/:board')
   .post(async (req, res) => {
@@ -251,6 +262,19 @@ module.exports = function (app) {
       return res.status(404).json({ error: 'Reply not found' });
     }
     reply.reported = true;
+    reply.bumped_on = new Date();
+
+    const thread = await Thread.findById(thread_id).exec();
+    if(!thread) {
+      console.error(`Could not find thread with ID: ${thread_id}`);
+      return res.status(404).json({ error: 'Thread not found' });
+    }
+    thread.bumped_on = new Date();
+    thread.save((err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to update thread' });
+      }
+    });
 
     reply.save((err) => {
       if (err) {

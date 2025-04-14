@@ -269,16 +269,16 @@ describe('Functional Tests', function () {
   })
 
   it('should report a reply', function (done) {
-    Reply.findOne({ text: 'First reply' }, function (err, reply) {
+    Thread.findOne({ text: 'Second thread' }, function (err, thread) {
       if (err) {
-        console.error("Error finding reply:", err);
+        console.error("Error finding thread:", err);
         return done(err);
       }
       chai.request(server)
         .put('/api/replies/testboard')
         .send({
-          thread_id: reply.thread,
-          reply_id: reply._id
+          thread_id: thread._id,
+          reply_id: thread.replies[0]
         })
         .end(function (err, res) {
           assert.equal(res.status, 200);
