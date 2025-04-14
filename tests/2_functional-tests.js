@@ -102,6 +102,7 @@ describe('Functional Tests', function () {
           assert.equal(thread.delete_password, hashedPassword);
           assert.isNotNull(thread.replies);
           assert.isArray(thread.replies);
+          assert.property(thread, '_id');
           done();
         });
       });
