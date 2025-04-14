@@ -239,8 +239,25 @@ module.exports = function (app) {
     })
 
     res.send('success');
-  }).put((req, res) => {
-    res.json({ message: 'Report reply API' });
+  }).put(async (req, res) => {
+    // Report a reply
+    const { thread_id, reply_id } = req.body;
+    if (!thread_id || !reply_id) {
+      return res.status(400).json({ error: 'Thread ID and reply ID are required' });
+    }
+
+    const reply = await Reply.findById(reply_id).exec();
+    if (!reply) {
+      return res.status(404).json({ error: 'Reply not found' });
+    }
+    reply.reported = true;
+
+    reply.save((err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Failed to report reply' });
+      }
+      res.send('reported');
+    });
   });
 
 };

@@ -79,15 +79,6 @@ describe('Functional Tests', function () {
     }
   });
 
-  it('should run test', function (done) {
-    chai.request(server)
-      .get('/')
-      .end(function (err, res) {
-        assert.equal(res.status, 200);
-        done();
-      });
-  })
-
   it('should create a new thread POST to /api/threads/:board', function (done) {
     chai.request(server)
       .post('/api/threads/testboard123')
@@ -213,7 +204,7 @@ describe('Functional Tests', function () {
     })
   })
 
-  it('should fetch a thread with all replies GET to /api/replies/:board', function (done) {
+  it('should fetch a single thread with all replies GET to /api/replies/:board', function (done) {
     Thread.findOne({ text: 'Second thread' }, function (err, thread) {
       if (err) {
         console.error("Error finding thread:", err);
@@ -234,5 +225,67 @@ describe('Functional Tests', function () {
     });
   })
 
+  it('should not delete a reply with incorrect password', function (done) {
+    Reply.findOne({ text: 'Test reply from API' }, function (err, reply) {
+      if (err) {
+        console.error("Error finding reply:", err);
+        return done(err);
+      }
+      chai.request(server)
+        .delete('/api/replies/testboard')
+        .send({
+          thread_id: reply.thread,
+          reply_id: reply._id,
+          delete_password: 'wrongpassword'
+        })
+        .end(function (err, res) {
+          assert.equal(res.status, 200);
+          assert.equal(res.text, 'incorrect password');
+          done();
+        });
+    })
+  });
+
+  it('should delete a reply with correct password', function (done) {
+
+    Reply.findOne({ text: 'Test reply from API' }, function (err, reply) {
+      if (err) {
+        console.error("Error finding reply:", err);
+        return done(err);
+      }
+      chai.request(server)
+        .delete('/api/replies/testboard')
+        .send({
+          thread_id: reply.thread,
+          reply_id: reply._id,
+          delete_password: 'replypassword'
+        })
+        .end(function (err, res) {
+          assert.equal(res.status, 200);
+          assert.equal(res.text, 'success');
+          done();
+        });
+    });
+  })
+
+  it('should report a reply', function (done) {
+    Reply.findOne({ text: 'First reply' }, function (err, reply) {
+      if (err) {
+        console.error("Error finding reply:", err);
+        return done(err);
+      }
+      chai.request(server)
+        .put('/api/replies/testboard')
+        .send({
+          thread_id: reply.thread,
+          reply_id: reply._id
+        })
+        .end(function (err, res) {
+          assert.equal(res.status, 200);
+          assert.equal(res.text, 'reported');
+          done();
+        });
+    });
+  });
 
 });
